@@ -1,0 +1,5 @@
+<launch>
+    <arg name="veh" default="$(env VEHICLE_NAME)"/>
+    <node name="tof_node" pkg="safety" type="tof_node.py" output="screen"/>
+</launch>
+

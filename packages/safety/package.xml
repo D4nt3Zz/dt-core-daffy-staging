@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>safety</name>
+  <version>1.0.0</version>
+  <description>Paquete de Seguridad para Duckie Day 2026</description>
+  <maintainer email="equipo@duocuc.cl">Equipo AV</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>rospy</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>duckietown_msgs</depend>
