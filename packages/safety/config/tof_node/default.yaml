@@ -1,0 +1,14 @@
+# ==============================================================================
+# Configuración por defecto para tof_node (Sensor Time of Flight)
+# ==============================================================================
+
+# Frecuencia de lectura del sensor (en Hz)
+publish_freq: 10.0
+
+# Umbral de distancia segura en metros. 
+# Si el sensor detecta algo a menor distancia que esto (ej: 0.15 = 15cm),
+# el nodo emitirá la alerta para frenar los motores.
+distance_threshold: 0.15
+
+# Tolerancia de lecturas fallidas antes de marcar error de sensor
+error_tolerance: 3

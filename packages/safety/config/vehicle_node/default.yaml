@@ -1,0 +1,9 @@
+# ==============================================================================
+# Configuración por defecto para vehicle_node
+# ==============================================================================
+
+# Frecuencia de publicación del nodo de seguridad (en Hz)
+publish_freq: 10.0
+
+# Distancia de frenado de emergencia ante otros Duckiebots (en metros)
+vehicle_distance_threshold: 0.20

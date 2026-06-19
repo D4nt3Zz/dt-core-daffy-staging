@@ -1,0 +1,16 @@
+# ==============================================================================
+# Configuración por defecto para qr_duckie_node
+# ==============================================================================
+
+# Frecuencia base de ejecución (opcional, para mantener el estándar DT)
+publish_freq: 10.0
+
+# Parámetros del filtro HSV (Ejemplo: Máscara para color rojo)
+# En el futuro puedes actualizar tu script de Python para leer estos
+# valores usando rospy.get_param('~hsv_lower') en lugar de fijarlos en el código.
+hsv_lower: [0, 120, 70]
+hsv_upper: [10, 255, 255]
+
+# Activar o desactivar alertas del ToF en el Dashboard web
+enable_tof_alerts: true
+tof_alert_threshold_cm: 7.0
