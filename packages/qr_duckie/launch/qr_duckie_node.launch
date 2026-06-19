@@ -1,0 +1,15 @@
+<launch>
+    <arg name="veh" doc="Name of vehicle. ex: megaman"/>
+    <arg name="node_name" default="qr_duckie_node"/>
+    <arg name="param_file_name" default="default" doc="Specify a param file. ex:default." />
+
+    <group ns="$(arg veh)">
+        
+        <node name="$(arg node_name)" pkg="qr_duckie" type="$(arg node_name).py" output="screen">
+            
+            <rosparam command="load" file="$(find qr_duckie)/config/$(arg node_name)/$(arg param_file_name).yaml"/>
+            
+        </node>
+        
+    </group>
+</launch>
