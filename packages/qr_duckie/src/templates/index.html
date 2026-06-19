@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Duckietown Dashboard</title>
+<style>
+:root {
+  --font-sans: 'Segoe UI', Roboto, Helvetica, sans-serif;
+  --font-mono: 'Courier New', Courier, monospace;
+  --color-background-primary: #121212;
+  --color-background-secondary: #1E1E1E;
+  --color-border-tertiary: #333333;
+  --color-text-primary: #E0E0E0;
+  --color-text-secondary: #A0A0A0;
+  --color-text-tertiary: #B38DF7;
+  --color-alert: #CF6679;
+  --border-radius-lg: 8px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans); background: #0a0a0a; color: var(--color-text-primary); padding: 20px;}
+.db{padding:1rem 0}
+.row{display:grid;gap:15px;margin-bottom:15px}
+.row-top{grid-template-columns:1fr 1fr 1fr 1fr}
+.row-bottom{grid-template-columns:1.5fr 2fr}
+.panel{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px; display:flex; flex-direction:column;}
+.panel-title{font-size:14px;font-weight:600;color:var(--color-text-primary);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.panel-sub{font-size:11px;color:var(--color-text-secondary);margin-bottom:12px}
+.topic{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-family:var(--font-mono);padding:3px 7px;border-radius:5px;background:var(--color-background-secondary); margin-top:auto;}
+.topic .sub{background:#E6F1FB;color:#185FA5;font-weight:bold;padding:1px 4px;border-radius:3px;font-size:10px;}
+
+.cam-preview{width:100%;height:180px;border-radius:6px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:center;margin-bottom:10px;overflow:hidden;}
+.cam-preview img {width: 100%; height: 100%; object-fit: cover;}
+
+.tof-display {flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; background:var(--color-background-secondary); border-radius: 6px; margin-bottom: 10px;}
+.tof-value {font-size: 3.5rem; font-weight: bold; color: var(--color-text-tertiary); transition: color 0.3s;}
+.tof-value.alert {color: var(--color-alert);}
+.tof-label {font-size: 12px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 1px;}
+
+.logs-area{font-size:12px;font-family:var(--font-mono);color:var(--color-text-secondary);line-height:1.8;height:180px;overflow-y:auto;background:var(--color-background-secondary);padding:10px;border-radius:6px;}
+.log-line{border-bottom:0.5px solid var(--color-border-tertiary); padding: 4px 0;}
+.log-success{color:#03DAC6}
+.log-warn{color:#F6A623}
+.log-error{color:var(--color-alert)}
+
+.qr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1; overflow-y: auto;}
+.qr-field{background:var(--color-background-secondary);padding:8px 10px;border-radius:6px;}
+.qr-key{color:var(--color-text-tertiary);font-size:11px; text-transform: capitalize; margin-bottom: 4px;}
+.qr-val{font-family:var(--font-mono);font-size:13px;color:var(--color-text-primary);word-break:break-all;}
+</style>
+</head>
+<body>
+
+<div class="db">
+  <div class="row row-top">
+    <div class="panel">
+      <div class="panel-title">Visión Frontal</div>
+      <div class="panel-sub">/camera_node/image/compressed</div>
+      <div class="cam-preview"><img src="/api/video_raw" alt="Conectando..."></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Filtro de Color (HSV)</div>
+      <div class="panel-sub">Máscara activa</div>
+      <div class="cam-preview"><img src="/api/video_hsv" alt="Procesando HSV..."></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Sensor ToF Frontal</div>
+      <div class="panel-sub">Distancia al obstáculo más cercano</div>
+      <div class="tof-display">
+          <div id="tof-val" class="tof-value">--</div>
+          <div class="tof-label">Centímetros</div>
+      </div>
+      <div class="topic"><span class="sub">SUB</span> /front_center_tof_driver_node/range</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Terminal del Sistema</div>
+      <div class="panel-sub">Eventos en tiempo real</div>
+      <div class="logs-area" id="logs-area"></div>
+    </div>
+  </div>
+
+  <div class="row row-bottom">
+    <div class="panel">
+      <div class="panel-title">Control de Detección QR</div>
+      <div class="panel-sub">Decodificador y Publicador</div>
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 15px;">
+        El nodo escanea activamente la imagen frontal. Al detectar una matriz de datos válida, 
+        el payload se extrae y se publica en la red de ROS.
+      </p>
+      <div class="topic"><span class="sub">PUB</span> ~qr_data</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Contenido JSON Decodificado</div>
+      <div class="panel-sub">Instrucciones enviadas al Duckiebot</div>
+      <div class="qr-grid" id="qr-grid">
+        </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function fetchDashboardData() {
+    try {
+      const response = await fetch('/api/data');
+      const data = await response.json();
+
+      // Actualizar Sensor ToF
+      const tofDisplay = document.getElementById('tof-val');
+      tofDisplay.textContent = data.tof_dist_cm;
+      if(data.tof_alert) {
+          tofDisplay.classList.add('alert');
+      } else {
+          tofDisplay.classList.remove('alert');
+      }
+
+      // Actualizar Logs
+      const logsArea = document.getElementById('logs-area');
+      logsArea.innerHTML = '';
+      data.logs.forEach(log => {
+        const logLine = document.createElement('div');
+        logLine.className = 'log-line';
+        logLine.innerHTML = `<span class="log-${log.type}">[${log.type.toUpperCase()}]</span> ${log.msg}`;
+        logsArea.appendChild(logLine);
+      });
+
+      // Actualizar Grid JSON
+      const qrGrid = document.getElementById('qr-grid');
+      qrGrid.innerHTML = '';
+      if (Object.keys(data.qr_json).length > 0) {
+        for (const [key, value] of Object.entries(data.qr_json)) {
+          qrGrid.innerHTML += `
+            <div class="qr-field">
+              <div class="qr-key">${key}</div>
+              <div class="qr-val">${typeof value === 'object' ? JSON.stringify(value) : value}</div>
+            </div>`;
+        }
+      } else {
+        qrGrid.innerHTML = '<div style="grid-column: span 2; font-size: 13px; color: var(--color-text-secondary);">Esperando lectura QR...</div>';
+      }
+
+    } catch (error) {
+      console.error("Fallo conectando con la API:", error);
+    }
+  }
+
+  setInterval(fetchDashboardData, 800);
+</script>
+</body>
+</html>
+
+<!-- COMENTARIO 2-->
