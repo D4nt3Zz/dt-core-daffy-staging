@@ -1,0 +1,5 @@
+<launch>
+    <arg name="veh" default="$(env VEHICLE_NAME)"/>
+    <node name="vehicle_node" pkg="safety" type="vehicle_node.py" output="screen"/>
+</launch>
+
